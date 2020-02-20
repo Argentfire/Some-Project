@@ -64,7 +64,7 @@
 #define SQL_DATABASE "scrp"
 #define SQL_PASSWORD ""
 
-#define SERVER_NAME 	 "Project Apocalypse Roleplay[DL]"
+#define SERVER_NAME 	 "Project Afterlife Roleplay[DL]"
 #define SERVER_URL 		 "www.pa-rp.org"
 #define SERVER_REVISION  "PA:RP v0.2"
 #define SERVER_CITY 	 (1) // (1) Los Santos, (2) San Fierro, (3) Las Venturas
