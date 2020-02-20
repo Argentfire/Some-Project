@@ -1,0 +1,29 @@
+
+----------
+Loaded log file: "server_log.txt".
+----------
+
+SA-MP Dedicated Server
+----------------------
+v0.3.DL-R1, (C)2005-2018 SA-MP Team
+
+[18:37:27] filterscripts = ""  (string)
+[18:37:27] 
+[18:37:27] Server Plugins
+[18:37:27] --------------
+[18:37:27]  Loading plugin: mysql
+[18:37:27]   Failed.
+[18:37:27]  Loading plugin: sscanf
+[18:37:27]   Failed.
+[18:37:27]  Loading plugin: gvar
+[18:37:27]   Failed.
+[18:37:27]  Loading plugin: crashdetect
+[18:37:27]   Failed.
+[18:37:27]  Loading plugin: streamer
+[18:37:27]   Failed.
+[18:37:27]  Loading plugin: bcrypt-samp
+[18:37:27]   Failed.
+[18:37:27]  Loaded 0 plugins.
+
+[18:37:28] I couldn't load any gamemode scripts. Please verify your server.cfg
+[18:37:28] It needs a gamemode0 line at the very least.
