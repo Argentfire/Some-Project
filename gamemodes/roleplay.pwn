@@ -1,11 +1,13 @@
 /*
-	South Central Roleplay by Emmet
+	Project Afterlife Roleplay[SCRP based]
+		by Emmet, further developed by Silverfire AKA Stalker
 
 	Description:
 	    20th February 2020
 	        - Silverfire:
 	            * Began reworking the Job System
 	                - Reworked Mechanic Job
+	                - Modified entrances; They can now be set as lootable
 		19th February 2020
 		    - Silverfire:
 		        * Created Perk System
@@ -130,6 +132,11 @@
 #define FACTION_MEDIC (3)
 #define FACTION_GOV (4)
 #define FACTION_GANG (5)
+
+// ENTRANCE TYPES
+#define ENTRANCE_GROCERY 30
+#define ENTRANCE_WAREHOUSE 31
+#define ENTRANCE_AMMUNATION 32
 
 // PERKS
 #define PERK_BARBARIAN 1
@@ -590,6 +597,8 @@ enum entranceData {
 	entranceType,
 	entranceCustom,
 	entranceWorld,
+	entranceLootable,
+	entranceLooted,
 	entranceForklift[7],
 	entrancePickup,
 	entranceMapIcon,
@@ -6657,6 +6666,7 @@ public Entrance_Load()
 	    EntranceData[i][entranceType] = cache_get_field_int(i, "entranceType");
 	    EntranceData[i][entranceCustom] = cache_get_field_int(i, "entranceCustom");
 	    EntranceData[i][entranceWorld] = cache_get_field_int(i, "entranceWorld");
+	    EntranceData[i][entranceLootable] = cache_get_field_int(i, "entranceLootable");
 
 		if (EntranceData[i][entranceType] == 3)
 		    CreateForklifts(i);
@@ -8660,10 +8670,11 @@ Entrance_Save(entranceid)
 	    EntranceData[entranceid][entranceExteriorVW],
 	    EntranceData[entranceid][entranceType]
 	);
-	format(query, sizeof(query), "%s, `entranceCustom` = '%d', `entranceWorld` = '%d' WHERE `entranceID` = '%d'",
+	format(query, sizeof(query), "%s, `entranceCustom` = '%d', `entranceWorld` = '%d', `entranceLootable` = '%d' WHERE `entranceID` = '%d'",
 	    query,
 	    EntranceData[entranceid][entranceCustom],
 	    EntranceData[entranceid][entranceWorld],
+	    EntranceData[entranceid][entranceLootable],
 	    EntranceData[entranceid][entranceID]
 	);
 	return mysql_tquery(g_iHandle, query);
@@ -8699,7 +8710,7 @@ IsPlayerInCityHall(playerid)
 	return 0;
 }
 
-IsPlayerInWarehouse(playerid)
+/*IsPlayerInWarehouse(playerid)
 {
 	new
 		id = -1;
@@ -8708,7 +8719,7 @@ IsPlayerInWarehouse(playerid)
 	    return 1;
 
 	return 0;
-}
+}*/
 
 IsPlayerInBank(playerid)
 {
@@ -8718,6 +8729,28 @@ IsPlayerInBank(playerid)
 	if ((id = Entrance_Inside(playerid)) != -1 && EntranceData[id][entranceType] == 2)
 	    return 1;
 
+	return 0;
+}
+
+IsPlayerInGrocery(playerid)
+{
+	new id = -1;
+	if((id = Entrance_Inside(playerid)) != -1 && EntranceData[id][entranceType] == ENTRANCE_GROCERY)
+	    return 1;
+	return 0;
+}
+IsPlayerInWarehouse(playerid)
+{
+	new id = -1;
+	if((id = Entrance_Inside(playerid)) != -1 && EntranceData[id][entranceType] == ENTRANCE_WAREHOUSE)
+	    return 1;
+	return 0;
+}
+IsPlayerInAmmunation(playerid)
+{
+	new id = -1;
+	if((id = Entrance_Inside(playerid)) != -1 && EntranceData[id][entranceType] == ENTRANCE_AMMUNATION)
+	    return 1;
 	return 0;
 }
 
@@ -21273,7 +21306,9 @@ public OnGameModeInit()
 	SetTimer("MinuteCheck", 60000, true);
 	SetTimer("WeatherRotator", 2400000, true);
 	SetTimer("RandomFire", 1800000, true);
-
+	for(new i = 0; i < MAX_ENTRANCES; i++) {
+    	EntranceData[i][entranceLooted] = 0;
+    }
 	return 1;
 }
 
@@ -31535,7 +31570,7 @@ CMD:editentrance(playerid, params[])
 	if (sscanf(params, "ds[24]S()[128]", id, type, string))
  	{
 	 	SendSyntaxMessage(playerid, "/editentrance [id] [name]");
-	    SendClientMessage(playerid, COLOR_YELLOW, "[NAMES]:{FFFFFF} location, interior, password, name, locked, mapicon, type, custom, virtual");
+	    SendClientMessage(playerid, COLOR_YELLOW, "[NAMES]:{FFFFFF} location, interior, password, name, locked, mapicon, type, custom, virtual, lootable");
 		return 1;
 	}
 	if ((id < 0 || id >= MAX_ENTRANCES) || !EntranceData[id][entranceExists])
@@ -31553,6 +31588,23 @@ CMD:editentrance(playerid, params[])
 		Entrance_Save(id);
 
 		SendAdminAlert(COLOR_LIGHTRED, "[ADMIN]: %s has adjusted the location of entrance ID: %d.", ReturnName(playerid, 0), id);
+	}
+	if (!strcmp(type, "lootable", true))
+	{
+	    if(EntranceData[id][entranceLootable] == 0) {
+			EntranceData[id][entranceLootable] = 1;
+			Entrance_Refresh(id);
+			Entrance_Save(id);
+
+			SendAdminAlert(COLOR_LIGHTRED, "[ADMIN]: %s has added loot to entrance ID: %d.", ReturnName(playerid, 0), id);
+	    }
+	    else {
+            EntranceData[id][entranceLootable] = 0;
+			Entrance_Refresh(id);
+			Entrance_Save(id);
+
+			SendAdminAlert(COLOR_LIGHTRED, "[ADMIN]: %s has removed loot from entrance ID: %d.", ReturnName(playerid, 0), id);
+	    }
 	}
 	else if (!strcmp(type, "interior", true))
 	{
@@ -33204,6 +33256,22 @@ CMD:crates(playerid, params[])
 	return 1;
 }
 
+CMD:scavenge(playerid, params[]) {
+	if(IsPlayerInGrocery(playerid)) {
+	
+	}
+	else if(IsPlayerInWarehouse(playerid)) {
+	
+	}
+	else if(IsPlayerInAmmunation(playerid)){
+	
+	}
+	else {
+		SendErrorMessage(playerid, "You can't use this command outside of lootable interiors!");
+	}
+	return 1;
+}
+
 CMD:craft(playerid, params[]) {
 	if(PlayerData[playerid][pPerk] == PERK_TINKERER) {
 	    switch(PlayerData[playerid][pPerkLevel]) {
@@ -33319,6 +33387,7 @@ CMD:updates(playerid, params[]) {
 	new string[50000];
 	format(string, sizeof(string), "\tPERK SYSTEM\n- Created the Perk System base\n- Created Barbarian Perk\n- Created Sharpshooter Perk\n- Created Tinkerer Perk[90%]\n\n- Added several new items to the inventory system");
 	format(string, sizeof(string), "%s\n\tJOB SYSTEM\n- Reworked the mechanic job", string);
+	format(string, sizeof(string), "%s\n\tSCAVENGE SYSTEM\n- Modified entrances; They can now be set as lootable", string);
 	Dialog_Show(playerid, DIALOG_SCRIPT_UPDATES, DIALOG_STYLE_MSGBOX, "Script Updates", string, "OK", "Send Inquiry");
 	return 1;
 }
