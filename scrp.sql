@@ -688,6 +688,7 @@ CREATE TABLE IF NOT EXISTS `entrances` (
   `entranceLocked` int(12) DEFAULT '0',
   `entranceCustom` int(4) DEFAULT '0',
   `entranceWorld` int(12) DEFAULT '0',
+  `entranceLootable` int(12) DEFAULT '0',
   PRIMARY KEY (`entranceID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=56 ;
 
